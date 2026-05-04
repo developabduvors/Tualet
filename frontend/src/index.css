@@ -1,2 +1,45 @@
 @import "tailwindcss";
-@plugin "daisyui";
+
+@theme {
+  --font-sans: "Inter", "system-ui", "sans-serif";
+  --color-primary: oklch(0.6 0.2 260);
+  --color-secondary: oklch(0.7 0.15 190);
+}
+
+:root {
+  --font-sans: "Inter", "system-ui", "sans-serif";
+  --color-primary: oklch(0.6 0.2 260);
+  --color-secondary: oklch(0.7 0.15 190);
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background-color: oklch(0.98 0.005 240); /* Softer premium background */
+  color: oklch(0.2 0.02 240);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: oklch(var(--bc) / 0.1);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: oklch(var(--bc) / 0.2);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.6s ease-out forwards;
+}
