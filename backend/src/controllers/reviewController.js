@@ -1,5 +1,6 @@
 const prisma = require('../config/prisma');
 const { formatReview } = require('../utils/serializers');
+const { recalculateToiletRating } = require('../utils/ratings');
 
 async function createReview(req, res, next) {
   try {
@@ -50,17 +51,7 @@ async function createReview(req, res, next) {
         }
       });
 
-      const aggregate = await tx.review.aggregate({
-        where: { toiletId },
-        _avg: { rating: true }
-      });
-
-      await tx.toilet.update({
-        where: { id: toiletId },
-        data: {
-          avg_rating: Number((aggregate._avg.rating || 0).toFixed(1))
-        }
-      });
+      await recalculateToiletRating(tx, toiletId);
 
       return createdReview;
     });
@@ -69,6 +60,40 @@ async function createReview(req, res, next) {
       success: true,
       message: 'Review saved successfully',
       data: formatReview(review)
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+async function deleteReview(req, res, next) {
+  try {
+    const id = Number(req.params.id);
+    const userId = req.user.id;
+    const role = req.user.role;
+
+    await prisma.$transaction(async (tx) => {
+      const review = await tx.review.findUnique({ where: { id } });
+
+      if (!review) {
+        const error = new Error('Review not found');
+        error.statusCode = 404;
+        throw error;
+      }
+
+      if (review.userId !== userId && role !== 'ADMIN') {
+        const error = new Error('Unauthorized to delete this review');
+        error.statusCode = 403;
+        throw error;
+      }
+
+      await tx.review.delete({ where: { id } });
+      await recalculateToiletRating(tx, review.toiletId);
+    });
+
+    return res.json({
+      success: true,
+      message: 'Review deleted successfully'
     });
   } catch (error) {
     next(error);
@@ -104,5 +129,6 @@ async function getToiletReviews(req, res, next) {
 
 module.exports = {
   createReview,
-  getToiletReviews
+  getToiletReviews,
+  deleteReview
 };

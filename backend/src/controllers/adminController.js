@@ -1,5 +1,6 @@
 const prisma = require('../config/prisma');
 const { sanitizeUser } = require('../utils/serializers');
+const { recalculateToiletRating } = require('../utils/ratings');
 
 async function getAllUsers(req, res, next) {
   try {
@@ -20,9 +21,23 @@ async function getAllUsers(req, res, next) {
 async function deleteUser(req, res, next) {
   try {
     const id = Number(req.params.id);
-    
-    await prisma.user.delete({
-      where: { id }
+
+    await prisma.$transaction(async (tx) => {
+      // Snapshot affected toilets BEFORE the cascade wipes the user's reviews.
+      const affectedReviews = await tx.review.findMany({
+        where: { userId: id },
+        select: { toiletId: true }
+      });
+      const affectedToiletIds = [...new Set(affectedReviews.map(r => r.toiletId))];
+
+      await tx.user.delete({ where: { id } });
+
+      for (const toiletId of affectedToiletIds) {
+        const stillExists = await tx.toilet.findUnique({ where: { id: toiletId } });
+        if (stillExists) {
+          await recalculateToiletRating(tx, toiletId);
+        }
+      }
     });
 
     return res.json({
