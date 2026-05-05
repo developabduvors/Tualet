@@ -1,1 +1,0 @@
-const nmaGap = Number(2)
