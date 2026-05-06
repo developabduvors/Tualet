@@ -25,9 +25,16 @@ export default function Layout({ children }) {
                   <span>{user.name.charAt(0).toUpperCase()}</span>
                 </div>
               </div>
-              <ul tabIndex={0} className="mt-3 z-[1] p-2 shadow menu menu-sm dropdown-content bg-base-100 rounded-box w-52">
+              <ul tabIndex={0} className="mt-3 z-[1] p-2 shadow menu menu-sm dropdown-content bg-base-100 rounded-box w-56">
                 <li className="menu-title text-xs opacity-60">{user.name} ({user.role})</li>
-                <li><button onClick={logout}>Log out</button></li>
+                <li><Link to="/">Bosh sahifa</Link></li>
+                {(user.role === 'OWNER' || user.role === 'ADMIN') && (
+                  <li><Link to="/my-toilets">Mening joylarim</Link></li>
+                )}
+                {user.role === 'ADMIN' && (
+                  <li><Link to="/admin">Admin panel</Link></li>
+                )}
+                <li><button onClick={logout}>Chiqish</button></li>
               </ul>
             </div>
           ) : (
