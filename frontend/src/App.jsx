@@ -1,5 +1,5 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from './context/AuthContext';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
 import { SocketProvider } from './context/SocketContext';
 import Layout from './components/Layout';
 import RoleProtectedRoute from './components/RoleProtectedRoute';
@@ -12,15 +12,6 @@ import EditToiletPage from './pages/EditToiletPage';
 import AdminPage from './pages/AdminPage';
 import MyToiletsPage from './pages/MyToiletsPage';
 
-function ProtectedRoute({ children }) {
-  const { user, loading } = useAuth();
-  
-  if (loading) return <div>Loading...</div>;
-  if (!user) return <Navigate to="/login" />;
-  
-  return children;
-}
-
 function AppRoutes() {
   return (
     <Layout>
@@ -29,8 +20,16 @@ function AppRoutes() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/toilets/:id" element={<ToiletDetailPage />} />
-        <Route path="/create-toilet" element={<ProtectedRoute><CreateToiletPage /></ProtectedRoute>} />
-        <Route path="/toilets/:id/edit" element={<ProtectedRoute><EditToiletPage /></ProtectedRoute>} />
+        <Route path="/create-toilet" element={
+          <RoleProtectedRoute roles={['OWNER', 'ADMIN']}>
+            <CreateToiletPage />
+          </RoleProtectedRoute>
+        } />
+        <Route path="/toilets/:id/edit" element={
+          <RoleProtectedRoute roles={['OWNER', 'ADMIN']}>
+            <EditToiletPage />
+          </RoleProtectedRoute>
+        } />
         <Route path="/admin" element={
           <RoleProtectedRoute roles={['ADMIN']}>
             <AdminPage />
@@ -41,7 +40,6 @@ function AppRoutes() {
             <MyToiletsPage />
           </RoleProtectedRoute>
         } />
-        {/* Protected routes can be added here */}
       </Routes>
     </Layout>
   );
