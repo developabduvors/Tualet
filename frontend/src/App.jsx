@@ -2,12 +2,14 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { SocketProvider } from './context/SocketContext';
 import Layout from './components/Layout';
+import RoleProtectedRoute from './components/RoleProtectedRoute';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
 import ToiletDetailPage from './pages/ToiletDetailPage';
 import CreateToiletPage from './pages/CreateToiletPage';
 import EditToiletPage from './pages/EditToiletPage';
+import AdminPage from './pages/AdminPage';
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -28,6 +30,11 @@ function AppRoutes() {
         <Route path="/toilets/:id" element={<ToiletDetailPage />} />
         <Route path="/create-toilet" element={<ProtectedRoute><CreateToiletPage /></ProtectedRoute>} />
         <Route path="/toilets/:id/edit" element={<ProtectedRoute><EditToiletPage /></ProtectedRoute>} />
+        <Route path="/admin" element={
+          <RoleProtectedRoute roles={['ADMIN']}>
+            <AdminPage />
+          </RoleProtectedRoute>
+        } />
         {/* Protected routes can be added here */}
       </Routes>
     </Layout>
