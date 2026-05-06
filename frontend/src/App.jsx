@@ -10,6 +10,7 @@ import ToiletDetailPage from './pages/ToiletDetailPage';
 import CreateToiletPage from './pages/CreateToiletPage';
 import EditToiletPage from './pages/EditToiletPage';
 import AdminPage from './pages/AdminPage';
+import MyToiletsPage from './pages/MyToiletsPage';
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -33,6 +34,11 @@ function AppRoutes() {
         <Route path="/admin" element={
           <RoleProtectedRoute roles={['ADMIN']}>
             <AdminPage />
+          </RoleProtectedRoute>
+        } />
+        <Route path="/my-toilets" element={
+          <RoleProtectedRoute roles={['OWNER', 'ADMIN']}>
+            <MyToiletsPage />
           </RoleProtectedRoute>
         } />
         {/* Protected routes can be added here */}
