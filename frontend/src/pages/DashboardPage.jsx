@@ -3,23 +3,81 @@ import { useNavigate } from 'react-router-dom';
 import { request } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 
+const TASHKENT = { lat: 41.3111, lng: 69.2797 };
+const TOILET_TYPES = ['PUBLIC', 'PRIVATE', 'PAID', 'FREE'];
+
 export default function DashboardPage() {
   const [toilets, setToilets] = useState([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
-  const [locationForm, setLocationForm] = useState({ lat: '41.3111', lng: '69.2797' });
+  const [coords, setCoords] = useState(TASHKENT);
+  const [coordsSource, setCoordsSource] = useState('default');
+  const [filters, setFilters] = useState({
+    radius: 5,
+    types: [],
+    maxPrice: '',
+    minRating: 0,
+  });
   const { user } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    loadToilets();
+    if (!('geolocation' in navigator)) {
+      loadNearby(TASHKENT, filters);
+      return;
+    }
+
+    const timeoutId = setTimeout(() => {
+      loadNearby(TASHKENT, filters);
+    }, 5000);
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        clearTimeout(timeoutId);
+        const real = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        setCoords(real);
+        setCoordsSource('real');
+        loadNearby(real, filters);
+      },
+      () => {
+        clearTimeout(timeoutId);
+        loadNearby(TASHKENT, filters);
+      },
+      { timeout: 5000, maximumAge: 60000 }
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function loadToilets() {
+  async function loadNearby(c = coords, f = filters) {
+    try {
+      setLoading(true);
+      const params = new URLSearchParams({
+        lat: String(c.lat),
+        lng: String(c.lng),
+        radius: String(f.radius),
+      });
+      if (f.types.length) params.set('type', f.types.join(','));
+      if (f.maxPrice !== '' && !Number.isNaN(Number(f.maxPrice))) {
+        params.set('maxPrice', String(Number(f.maxPrice)));
+      }
+      if (f.minRating > 0) params.set('minRating', String(f.minRating));
+
+      const response = await request(`/toilets/nearby?${params.toString()}`);
+      setToilets(response.data || []);
+      setMessage(`${response.count || 0} ta joy topildi`);
+    } catch (error) {
+      setMessage(error.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function loadAll() {
     try {
       setLoading(true);
       const response = await request('/toilets');
       setToilets(response.data || []);
+      setMessage(`${response.data?.length || 0} ta joy (filtrlanmagan)`);
     } catch (error) {
       setMessage(error.message);
     } finally {
@@ -27,82 +85,137 @@ export default function DashboardPage() {
     }
   }
 
-  async function loadNearbyToilets() {
-    try {
-      setLoading(true);
-      const response = await request(
-        `/toilets/nearby?lat=${locationForm.lat}&lng=${locationForm.lng}`
-      );
-      setToilets(response.data || []);
-      setMessage(`${response.count || 0} ta yaqin joy topildi`);
-    } catch (error) {
-      setMessage(error.message);
-    } finally {
-      setLoading(false);
-    }
+  function toggleType(t) {
+    setFilters((prev) => ({
+      ...prev,
+      types: prev.types.includes(t)
+        ? prev.types.filter((x) => x !== t)
+        : [...prev.types, t],
+    }));
   }
 
   return (
     <div className="space-y-10 animate-in fade-in duration-700">
-      {/* Hero Section */}
       <section className="relative overflow-hidden rounded-3xl bg-primary px-8 py-12 text-primary-content shadow-2xl shadow-primary/30">
         <div className="relative z-10 max-w-2xl">
           <h2 className="text-4xl lg:text-5xl font-black tracking-tight mb-4">Eng yaqin va toza joyni toping</h2>
           <p className="text-lg opacity-90 mb-8 max-w-lg leading-relaxed">
-            Biz sizga Toshkentdagi barcha jamoat va xususiy hojatxonalarni topishga yordam beramiz. 
+            Biz sizga Toshkentdagi barcha jamoat va xususiy hojatxonalarni topishga yordam beramiz.
             Reytinglar, rasmlar va narxlarni solishtiring.
           </p>
           <div className="flex flex-wrap gap-3">
             <div className="badge badge-secondary badge-lg font-bold gap-2 py-4 px-6">
               <span className="text-xs uppercase opacity-70">Jami:</span> {toilets.length} ta joy
             </div>
+            <div className="badge badge-lg font-bold gap-2 py-4 px-6 bg-white/10 border-white/20 text-primary-content">
+              {coordsSource === 'real' ? '📍 Real joylashuv' : '🌆 Toshkent (standart)'}
+            </div>
           </div>
         </div>
-        {/* Abstract shapes */}
         <div className="absolute -right-20 -top-20 w-80 h-80 bg-white/10 rounded-full blur-3xl"></div>
         <div className="absolute right-20 -bottom-20 w-60 h-60 bg-secondary/20 rounded-full blur-3xl"></div>
       </section>
 
       <div className="grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-10 items-start">
-        {/* Search Sidebar */}
-        <aside className="space-y-6 sticky top-24">
+        <aside className="space-y-6 lg:sticky lg:top-24">
           <div className="card bg-base-100 shadow-xl border border-base-content/5 overflow-hidden">
             <div className="p-1 bg-gradient-to-r from-primary to-secondary"></div>
             <div className="card-body gap-6">
               <div>
                 <h3 className="text-xl font-black uppercase tracking-tight flex justify-between items-center">
                   Qidiruv
-                  <button className="btn btn-ghost btn-xs text-primary font-bold" onClick={loadToilets}>Hammasi</button>
+                  <button className="btn btn-ghost btn-xs text-primary font-bold" onClick={loadAll}>Hammasi</button>
                 </h3>
                 <p className="text-xs opacity-50 font-medium">Joylashuvingiz bo'yicha qidiring</p>
               </div>
-              
+
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="form-control">
                     <label className="label py-1"><span className="label-text text-[10px] uppercase font-black opacity-40 tracking-widest">Lat</span></label>
                     <input
                       className="input input-bordered w-full bg-base-200 border-none focus:ring-2 focus:ring-primary/20 transition-all font-mono"
-                      value={locationForm.lat}
-                      onChange={(e) => setLocationForm({ ...locationForm, lat: e.target.value })}
+                      value={coords.lat}
+                      onChange={(e) => { setCoords({ ...coords, lat: e.target.value }); setCoordsSource('default'); }}
                     />
                   </div>
                   <div className="form-control">
                     <label className="label py-1"><span className="label-text text-[10px] uppercase font-black opacity-40 tracking-widest">Lng</span></label>
                     <input
                       className="input input-bordered w-full bg-base-200 border-none focus:ring-2 focus:ring-primary/20 transition-all font-mono"
-                      value={locationForm.lng}
-                      onChange={(e) => setLocationForm({ ...locationForm, lng: e.target.value })}
+                      value={coords.lng}
+                      onChange={(e) => { setCoords({ ...coords, lng: e.target.value }); setCoordsSource('default'); }}
                     />
                   </div>
                 </div>
 
-                <button 
-                  className="btn btn-primary btn-block shadow-lg shadow-primary/20 h-14 text-lg font-black tracking-wide" 
-                  onClick={loadNearbyToilets} 
+                <div className="collapse collapse-plus bg-base-200/60 rounded-2xl">
+                  <input type="checkbox" />
+                  <div className="collapse-title font-black uppercase text-xs tracking-widest">Filtrlar</div>
+                  <div className="collapse-content space-y-5">
+                    <div>
+                      <label className="label py-1">
+                        <span className="label-text text-[10px] uppercase font-black opacity-60 tracking-widest">Radius: {filters.radius} km</span>
+                      </label>
+                      <input
+                        type="range" min="0.5" max="50" step="0.5"
+                        value={filters.radius}
+                        onChange={(e) => setFilters({ ...filters, radius: Number(e.target.value) })}
+                        className="range range-primary range-xs"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="label py-1">
+                        <span className="label-text text-[10px] uppercase font-black opacity-60 tracking-widest">Turi</span>
+                      </label>
+                      <div className="flex flex-wrap gap-2">
+                        {TOILET_TYPES.map((t) => (
+                          <button
+                            key={t}
+                            type="button"
+                            onClick={() => toggleType(t)}
+                            className={`btn btn-xs rounded-full ${filters.types.includes(t) ? 'btn-primary' : 'btn-ghost bg-base-100'}`}
+                          >
+                            {t}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="label py-1">
+                        <span className="label-text text-[10px] uppercase font-black opacity-60 tracking-widest">Maks. narx (so'm)</span>
+                      </label>
+                      <input
+                        type="number" min="0"
+                        placeholder="Cheklov yo'q"
+                        value={filters.maxPrice}
+                        onChange={(e) => setFilters({ ...filters, maxPrice: e.target.value })}
+                        className="input input-bordered input-sm w-full bg-base-100"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="label py-1">
+                        <span className="label-text text-[10px] uppercase font-black opacity-60 tracking-widest">Min. reyting: {filters.minRating > 0 ? `⭐ ${filters.minRating}` : 'cheklov yo\'q'}</span>
+                      </label>
+                      <input
+                        type="range" min="0" max="5" step="0.5"
+                        value={filters.minRating}
+                        onChange={(e) => setFilters({ ...filters, minRating: Number(e.target.value) })}
+                        className="range range-secondary range-xs"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  className="btn btn-primary btn-block shadow-lg shadow-primary/20 h-14 text-lg font-black tracking-wide"
+                  onClick={() => loadNearby()}
                   disabled={loading}
                 >
-                  {loading ? <span className="loading loading-spinner"></span> : 'Yaqinlarni ko\'rish'}
+                  {loading ? <span className="loading loading-spinner"></span> : 'Qidirish'}
                 </button>
               </div>
             </div>
@@ -113,11 +226,11 @@ export default function DashboardPage() {
               <div className="card-body p-6">
                 <h3 className="card-title text-lg uppercase font-black">Ega bo'limi</h3>
                 <p className="text-xs opacity-70">O'z joyingizni qo'shing va boshqaring</p>
-                <button 
+                <button
                   className="btn btn-secondary btn-sm mt-2 w-full font-bold"
-                  onClick={() => navigate('/create-toilet')}
+                  onClick={() => navigate('/my-toilets')}
                 >
-                  + Yangi joy qo'shish
+                  Mening joylarim
                 </button>
               </div>
             </div>
@@ -131,7 +244,6 @@ export default function DashboardPage() {
           )}
         </aside>
 
-        {/* Results Area */}
         <section>
           <div className="flex flex-col sm:flex-row justify-between items-end sm:items-center mb-8 gap-4">
             <div>
@@ -151,9 +263,7 @@ export default function DashboardPage() {
                 className="group relative bg-base-100 rounded-[2rem] p-6 shadow-xl hover:shadow-2xl transition-all duration-500 border border-base-content/5 cursor-pointer overflow-hidden"
                 onClick={() => navigate(`/toilets/${item.id}`)}
               >
-                {/* Decorative glow */}
                 <div className="absolute -right-10 -top-10 w-24 h-24 bg-primary/5 rounded-full blur-2xl group-hover:bg-primary/20 transition-colors"></div>
-                
                 <div className="relative z-10">
                   <div className="flex justify-between items-start mb-6">
                     <h3 className="text-2xl font-black tracking-tight leading-tight max-w-[70%] group-hover:text-primary transition-colors">
@@ -184,7 +294,7 @@ export default function DashboardPage() {
                       </div>
                       <span className="text-xs font-black uppercase opacity-40">{item.type}</span>
                     </div>
-                    {item.distance && (
+                    {item.distance !== undefined && (
                       <span className="text-sm font-black text-primary bg-primary/10 py-1 px-3 rounded-lg">
                         {item.distance.toFixed(2)} km
                       </span>
@@ -193,12 +303,12 @@ export default function DashboardPage() {
                 </div>
               </div>
             ))}
-            
+
             {toilets.length === 0 && !loading && (
               <div className="col-span-full py-32 text-center bg-base-100 rounded-[3rem] border-2 border-dashed border-base-content/10">
                 <div className="w-24 h-24 bg-base-200 rounded-full flex items-center justify-center mx-auto mb-6 text-4xl opacity-50">🚽</div>
                 <h3 className="text-2xl font-black uppercase opacity-40">Hozircha bo'sh</h3>
-                <p className="text-sm opacity-30 mt-2 max-w-xs mx-auto italic">Bu hududda hech qanday joy topilmadi. Qidiruv parametrlarini o'zgartirib ko'ring.</p>
+                <p className="text-sm opacity-30 mt-2 max-w-xs mx-auto italic">Bu hududda hech qanday joy topilmadi. Filtrlarni o'zgartirib ko'ring.</p>
               </div>
             )}
           </div>
