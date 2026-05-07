@@ -174,6 +174,82 @@ Misol: `GET /nearby?lat=41.31&lng=69.27&radius=2&type=FREE,PUBLIC&minRating=4&li
 
 ---
 
+## 🔧 Backend ichki tafsilotlar (chuqur texnik)
+
+API ma'lumotnomasi yuqorida; bu bo'lim **kod ichida nima qilinganini** va **nega** shunday qilinganini hujjatlaydi.
+
+### Loyiha skeleti
+- `server.js` — `dotenv` yuklaydi, `http.Server` yaratadi, unga `Socket.io` ni biriktiradi va Express `app` ni mount qiladi (`PORT=5000`).
+- `app.js` — faqat o'rama: `cors`, `express.json()`, `/api/health`, 4 ta route guruh va oxirida xato handler. Hech qanday biznes mantiq bu yerda emas.
+- `config/prisma.js` — `PrismaClient` singletoni. **Boshqa joydan `new PrismaClient()` qilinmaydi**, aks holda har bir import alohida ulanish ochib yuboradi.
+
+### Ma'lumotlar bazasi (`prisma/schema.prisma`)
+3 ta model — **User**, **Toilet**, **Review** (SQLite, `provider = "sqlite"`).
+
+| Model | Diqqat qilish kerak bo'lgan maydonlar |
+|---|---|
+| `User` | `role` — `String @default("USER")` (enum yo'q, controller `toUpperCase()` qiladi). `phone @unique`. |
+| `Toilet` | `images` — JSON-string (DB'da string, javobda massiv). `avg_rating` — **denormalized**, qo'lda yangilanadi. `@@index([lat, lng])` va `@@index([status])`. |
+| `Review` | `@@unique([userId, toiletId])` — bir foydalanuvchi bir hojatxonaga **bitta** sharh. `quick_feedback` — JSON-string. |
+
+> ⚠️ Schema `enum UserRole`, `enum ToiletStatus`, `enum ToiletType` deklaratsiya qiladi, lekin SQLite enumlarni qo'llab-quvvatlamaydi — barchasi `String` sifatida saqlanadi. Validatsiya **controllerlarda** (`String(value).toUpperCase()` + `ALLOWED_ROLES`).
+
+### Auth — `bcrypt` emas, `scrypt`
+- `utils/password.js` Node-ning native `crypto.scryptSync` dan foydalanadi va parolni `"salt:hash"` formatida saqlaydi.
+- `comparePassword` `crypto.timingSafeEqual` ishlatadi — bayt-bayt solishtirish bir xil vaqt sarflaydi, shuning uchun timing-attack orqali parolni topib bo'lmaydi.
+- ⚠️ `bcrypt` ga ko'chirish — mavjud foydalanuvchilarning parollarini buzadi, migratsiyasiz qilmang.
+- `utils/jwt.js` token ichiga `{ id, phone, role }` ni embed qiladi; `middlewares/authMiddleware.js#authenticateToken` uni `req.user` ga qo'yadi, `authorizeRoles(...)` esa kompozitsion middleware sifatida ishlaydi.
+
+### Nearby qidiruvi — ikki bosqichli filtr
+`getNearbyToilets` (`controllers/toiletController.js`) shunday ishlaydi:
+
+1. **SQL bounding-box** (lat/lng deltalari, `[lat, lng]` indeks ishlatiladi):
+   - `latDelta = radiusKm / 111`
+   - `lngDelta = radiusKm / (111 × cos(lat))`
+   - `cosLat > 0.01` tekshiruvi — qutbga yaqin koordinatalarda divide-by-zero himoyasi.
+2. **Haversine aniq filtr** (`utils/haversine.js`) — natijada qolgan nomzodlar uchun haqiqiy aylana masofa hisoblanadi, keyin `<= radius` filtrlanadi, `distance` bo'yicha tartiblanadi va `limit` bilan kesiladi.
+
+> Bu pattern "DB tezda kvadrat to'rtburchak ichidagi yozuvlarni topadi → ilova aniq aylanani tekshiradi" — ikkalasi alohida kuchli, birgalikda esa optimizatsiyalangan.
+
+### `avg_rating` — denormalized maydon, 3 joyda qayta hisoblanadi
+`utils/ratings.js#recalculateToiletRating(tx, toiletId)` — `prisma.$transaction` ichida chaqiriladigan yagona joy. **`avg_rating` ga to'g'ridan-to'g'ri yozish taqiqlanadi**.
+
+Chaqiriladi:
+1. `reviewController.createReview` — `upsert` dan so'ng (transaction ichida).
+2. `reviewController.deleteReview` — `delete` dan so'ng (transaction ichida).
+3. `adminController.deleteUser` — **muhim pattern**: cascade `User` ni o'chirgunga qadar, ta'sir qilingan `toiletId`-lar `affectedToiletIds` ga snapshot qilinadi. Cascade reviewlarni o'chirgach, har bir saqlangan toilet uchun rating qayta hisoblanadi.
+
+> Bu klassik **"snapshot before cascade"** patterni: agar avval olib qo'ymasangiz, transaction ichida endi mavjud bo'lmagan reviewlardan toiletId'larni topib bo'lmaydi.
+
+### Realtime chat — DB'siz
+- Socket.io `server.js` ichida (alohida modul emas).
+- `join_personal_room` → har bir foydalanuvchi `user_<id>` xonasiga kiradi.
+- `send_message` → qabul qiluvchining xonasiga emit qiladi **VA** yuboruvchiga `socket.emit` orqali echo qaytaradi (frontend lokal append qilmasligi uchun).
+- **Persistlik yo'q** — agar foydalanuvchi offlayn bo'lsa, xabar yo'qoladi. `Message` modeli kelajakdagi rejalardan biri.
+
+### Util fayllar — har biri bitta narsa qiladi
+| Fayl | Vazifa |
+|---|---|
+| `utils/jwt.js` | `generateToken(user)` → `{id, phone, role}`. |
+| `utils/password.js` | `hashPassword`, `comparePassword` (scrypt + timingSafeEqual). |
+| `utils/haversine.js` | `getDistanceInKm(lat1, lng1, lat2, lng2)`. |
+| `utils/ratings.js` | `recalculateToiletRating(tx, toiletId)` — `toFixed(1)` bilan yumalata. |
+| `utils/serializers.js` | `formatToilet` (images JSON parse), `formatReview` (quick_feedback JSON parse), `sanitizeUser` (parolni qaytarmaydi). |
+
+> Har bir API javobi qaytishidan oldin tegishli serializer orqali o'tkaziladi — frontend hech qachon JSON-string ko'rmaydi.
+
+### Konvensiyalar
+- **CommonJS** (`require`) — `package.json` da `"type": "commonjs"`. Frontend ESM, lekin backend qattiq CommonJS.
+- **Javob shakli**: hamma controller `{ success, message?, data?, count? }` qaytaradi.
+- **Xato boshqaruvi**: hamma controller `try { ... } catch (error) { next(error); }` ko'rinishida yozilgan; `app.js` oxiridagi handler `{ success: false, message }` qaytaradi.
+
+### Backendning oxirgi commitlari
+- `78ee933` — nearby filtrlari (`type`, `maxPrice`, `minRating`) va `avg_rating` qayta hisoblash tuzatishlari.
+- `a4a3d6c` — `abduvoris` branch ochilishi.
+- `f6a99a0` — backend skeletining birinchi versiyasi.
+
+---
+
 ## 🚀 Kelajakdagi rejalar (Roadmap)
 
 1.  **Xarita Integratsiyasi (Maps)**: Hojatxonalarni Google Maps yoki Leaflet xaritasida vizual ko'rish.
