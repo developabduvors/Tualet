@@ -104,6 +104,11 @@ backend/
 
 ## API endpointlari
 
+> **Belgilarning ma'nosi:**
+> - **Auth ustuni** — `✅` = JWT token majburiy (`Authorization: Bearer ...`); `—` = ochiq endpoint.
+> - **Rol ustuni** — `OWNER` / `USER` / `ADMIN` / `egasi` = ruxsat etilgan rol(lar); `—` = rol cheklovi yo'q.
+> - Barcha qatorlardagi endpointlar **allaqachon implementatsiya qilingan va ishlaydi** — bu hujjat hozirgi holatni tasvirlaydi, TODO emas.
+
 | Yo'l | Metod | Auth | Rol | Funksiya |
 |---|---|---|---|---|
 | `/api/health` | GET | — | — | Tirik tekshiruvi |
