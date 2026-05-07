@@ -14,6 +14,15 @@ function authenticateToken(req, res, next) {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    // Refresh tokenni access sifatida ishlatishga yo'l qo'ymaslik.
+    if (decoded.type === 'refresh') {
+      return res.status(401).json({
+        success: false,
+        message: 'Refresh token cannot be used as access token'
+      });
+    }
+
     req.user = decoded;
     next();
   } catch (error) {

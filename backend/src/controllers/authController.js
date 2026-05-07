@@ -1,5 +1,5 @@
 const prisma = require('../config/prisma');
-const { generateToken } = require('../utils/jwt');
+const { generateTokens, verifyRefreshToken } = require('../utils/jwt');
 const { hashPassword, comparePassword } = require('../utils/password');
 const { sanitizeUser } = require('../utils/serializers');
 
@@ -44,12 +44,13 @@ async function register(req, res, next) {
       }
     });
 
-    const token = generateToken(user);
+    const { accessToken, refreshToken } = generateTokens(user);
 
     return res.status(201).json({
       success: true,
       message: 'User registered successfully',
-      token,
+      accessToken,
+      refreshToken,
       data: sanitizeUser(user)
     });
   } catch (error) {
@@ -79,12 +80,61 @@ async function login(req, res, next) {
       });
     }
 
-    const token = generateToken(user);
+    const { accessToken, refreshToken } = generateTokens(user);
 
     return res.json({
       success: true,
       message: 'Login successful',
-      token,
+      accessToken,
+      refreshToken,
+      data: sanitizeUser(user)
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+async function refresh(req, res, next) {
+  try {
+    const token = req.body.refreshToken;
+
+    if (!token) {
+      return res.status(400).json({
+        success: false,
+        message: 'refreshToken is required'
+      });
+    }
+
+    let decoded;
+    try {
+      decoded = verifyRefreshToken(token);
+    } catch (error) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid or expired refresh token'
+      });
+    }
+
+    // Foydalanuvchini DB'dan qayta o'qish — rol o'zgargan bo'lsa
+    // yangi access token avtomatik yangi roli bilan chiqadi.
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.id }
+    });
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'User no longer exists'
+      });
+    }
+
+    const { accessToken, refreshToken: newRefreshToken } = generateTokens(user);
+
+    return res.json({
+      success: true,
+      message: 'Tokens refreshed',
+      accessToken,
+      refreshToken: newRefreshToken,
       data: sanitizeUser(user)
     });
   } catch (error) {
@@ -119,5 +169,6 @@ async function getMe(req, res, next) {
 module.exports = {
   register,
   login,
+  refresh,
   getMe
 };

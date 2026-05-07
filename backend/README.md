@@ -107,8 +107,9 @@ backend/
 | Yo'l | Metod | Auth | Rol | Funksiya |
 |---|---|---|---|---|
 | `/api/health` | GET | — | — | Tirik tekshiruvi |
-| `/api/auth/register` | POST | — | — | Ro'yxatdan o'tish |
-| `/api/auth/login` | POST | — | — | Kirish |
+| `/api/auth/register` | POST | — | — | Ro'yxatdan o'tish (access + refresh token qaytaradi) |
+| `/api/auth/login` | POST | — | — | Kirish (access + refresh token qaytaradi) |
+| `/api/auth/refresh` | POST | — | — | Refresh tokendan yangi access + refresh juftlik |
 | `/api/auth/me` | GET | ✅ | — | Joriy foydalanuvchi |
 | `/api/toilets` | GET | — | — | Hammasi (filter: `status`, `ownerId`) |
 | `/api/toilets/nearby` | GET | — | — | Yaqin atrofdagilar (lat, lng, radius, type, maxPrice, minRating, limit) |
@@ -147,6 +148,25 @@ backend/
 - `utils/password.js` → `crypto.scryptSync` + `"salt:hash"` format.
 - `comparePassword` → `crypto.timingSafeEqual` (timing-attack himoyasi).
 - ⚠️ `bcrypt`'ga ko'chirish hozirgi qatorlarni buzadi — migratsiyasiz qilmang.
+
+### JWT — access + refresh token
+`utils/jwt.js` ikki turdagi token chiqaradi (bitta `JWT_SECRET`, payloaddagi `type` field bilan farqlanadi):
+
+| Token | Expiry | Payload | Maqsad |
+|---|---|---|---|
+| Access | `15m` | `{ id, phone, role, type: 'access' }` | Har bir himoyalangan so'rovda `Authorization: Bearer ...` |
+| Refresh | `7d` | `{ id, type: 'refresh' }` | Faqat `POST /api/auth/refresh` ga yuboriladi |
+
+**Oqim:**
+1. `register` / `login` → `{ accessToken, refreshToken, data }` qaytaradi.
+2. Access token muddati tugagach (`401`), frontend `POST /auth/refresh` ga `{ refreshToken }` yuboradi.
+3. Backend foydalanuvchini DB'dan **qayta o'qiydi** (rol o'zgargan bo'lsa, yangi access token yangi rol bilan chiqadi) va **yangi juftlik** qaytaradi.
+4. Refresh token muddati tugagan/yaroqsiz bo'lsa → `401` → frontend logout qiladi.
+
+**Xavfsizlik:**
+- `authMiddleware.authenticateToken` `decoded.type === 'refresh'` bo'lsa rad qiladi — refresh tokenni access sifatida ishlatib bo'lmaydi.
+- Refresh tokenda `role`/`phone` yo'q (ataylab) — refresh paytida DB'dan qayta o'qib olinadi.
+- Token revocation jadvali **yo'q** — refresh tokenni bekor qilish kerak bo'lsa, `JWT_SECRET` ni o'zgartirish hammani logout qiladi.
 
 ### Nearby qidiruv (ikki bosqich)
 1. **SQL bounding-box** — `[lat, lng]` indeks orqali tezkor prefilter.
