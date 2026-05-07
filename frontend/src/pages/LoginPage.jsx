@@ -20,7 +20,7 @@ export default function LoginPage() {
         method: 'POST',
         body: JSON.stringify(form)
       });
-      login(response.token);
+      login(response.accessToken, response.refreshToken);
       navigate('/');
     } catch (err) {
       setError(err.message);

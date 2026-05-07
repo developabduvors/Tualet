@@ -39,7 +39,7 @@ Frontend `http://localhost:5000` ni 2 joyda ishlatadi — port/host o'zgarsa **i
 
 | Fayl | Maqsad |
 |---|---|
-| `src/lib/api.js` | `API_BASE_URL = 'http://localhost:5000/api'` |
+| `src/lib/api.js` | `API_BASE_URL = 'http://localhost:5000/api'` (refresh oqimi `/auth/refresh` ga ham boradi) |
 | `src/context/SocketContext.jsx` | `io('http://localhost:5000')` |
 
 ---
@@ -118,9 +118,10 @@ frontend/
 ## State management
 
 ### `AuthContext`
-- Token `localStorage` da `toilet_finder_token` kalit ostida.
-- `token` state o'zgarsa, `useEffect` `localStorage`-ni yangilaydi va `/auth/me` ni qayta yuklaydi.
-- `user`, `token`, `loading`, `login(newToken)`, `logout()`, `setUser` ekspoz qiladi.
+- **Ikkita** token `localStorage` da: `toilet_finder_access_token` va `toilet_finder_refresh_token`.
+- `accessToken` state o'zgarsa, `useEffect` `/auth/me` ni qayta yuklaydi.
+- `user`, `accessToken`, `loading`, `login(accessToken, refreshToken)`, `logout()`, `setUser` ekspoz qiladi.
+- Token persistlikni `lib/api.js#setTokens`/`clearTokens` boshqaradi (yagona manba).
 
 ### `SocketContext`
 - `user` o'zgarsa, eski socket'ni `disconnect` qiladi va yangisini yaratadi.
@@ -130,9 +131,11 @@ frontend/
 - `sendMessage(receiverId, text)` — `Number(receiverId)` ga konvertatsiya qiladi (backend uchun majburiy).
 
 ### API layer (`lib/api.js`)
-- Yagona `request(path, options)` — `Authorization: Bearer <token>` ni avto-qo'shadi.
-- `401` kelsa: localStorage'ni tozalaydi va `/login` ga to'liq sahifa redirecti (`window.location.href`).
+- Yagona `request(path, options)` — `Authorization: Bearer <accessToken>` ni avto-qo'shadi.
+- **Avto-refresh oqimi**: `401` kelsa, `tryRefresh()` orqali `POST /auth/refresh` ga refresh token yuborilib, yangi juftlik olinadi va so'rov **qayta urinadi**. Faqat refresh ham muvaffaqiyatsiz bo'lsa → tokenlar tozalanadi va `/login` ga to'liq sahifa redirecti.
+- `/auth/login`, `/auth/register`, `/auth/refresh` endpointlarida refresh urinmaydi (cheksiz tsikl xavfini oldini olish).
 - JSON parse'ning xatosida bo'sh obyekt fallback.
+- Eksport: `request`, `setTokens(access, refresh)`, `clearTokens()`, `getAccessToken()`.
 
 ---
 

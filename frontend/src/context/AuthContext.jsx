@@ -1,47 +1,49 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import { request } from '../lib/api';
+import { request, setTokens, clearTokens, getAccessToken } from '../lib/api';
 
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
-  const [token, setToken] = useState(() => localStorage.getItem('toilet_finder_token') || '');
+  const [accessToken, setAccessToken] = useState(() => getAccessToken() || '');
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(!!token);
+  const [loading, setLoading] = useState(!!accessToken);
 
   useEffect(() => {
-    if (token) {
-      localStorage.setItem('toilet_finder_token', token);
+    if (accessToken) {
       loadCurrentUser();
     } else {
-      localStorage.removeItem('toilet_finder_token');
       setUser(null);
       setLoading(false);
     }
-  }, [token]);
+  }, [accessToken]);
 
   async function loadCurrentUser() {
     try {
       const response = await request('/auth/me');
       setUser(response.data);
     } catch (error) {
-      setToken('');
+      // request() 401 da tokenlarni tozalab redirect qiladi — bu yerda
+      // shunchaki state'ni tozalaymiz.
+      setAccessToken('');
       setUser(null);
     } finally {
       setLoading(false);
     }
   }
 
-  function login(newToken) {
-    setToken(newToken);
+  function login(newAccessToken, newRefreshToken) {
+    setTokens(newAccessToken, newRefreshToken);
+    setAccessToken(newAccessToken);
   }
 
   function logout() {
-    setToken('');
+    clearTokens();
+    setAccessToken('');
     setUser(null);
   }
 
   return (
-    <AuthContext.Provider value={{ token, user, loading, login, logout, setUser }}>
+    <AuthContext.Provider value={{ accessToken, user, loading, login, logout, setUser }}>
       {children}
     </AuthContext.Provider>
   );
