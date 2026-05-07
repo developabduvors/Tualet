@@ -1,0 +1,43 @@
+# ─── OS junk ───
+desktop.ini
+Thumbs.db
+ehthumbs.db
+.DS_Store
+.Spotlight-V100
+.Trashes
+
+# ─── IDE / Editor ───
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.suo
+*.swp
+*.swo
+*.sln
+*.ntvs*
+*.njsproj
+
+# ─── Logs ───
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ─── Dependencies (backend) ───
+# node_modules/ frontendda alohida .gitignore'da ham bor.
+backend/node_modules/
+
+# ─── Build outputs ───
+dist/
+build/
+*.local
+
+# ─── Environment / secrets ───
+# .env tracked qoldirilgan (avvaldan committed); kelajakdagi yangi fayllar uchun:
+.env.local
+.env.*.local
+
+# Eslatma: backend/prisma/dev.db loyiha konvensiyasi bo'yicha committed
+# (CLAUDE.md ga qarang) — gitignore qilinmaydi.
