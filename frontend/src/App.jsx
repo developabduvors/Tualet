@@ -9,7 +9,6 @@ import DashboardPage from './pages/DashboardPage';
 import ToiletDetailPage from './pages/ToiletDetailPage';
 import CreateToiletPage from './pages/CreateToiletPage';
 import EditToiletPage from './pages/EditToiletPage';
-import AdminPage from './pages/AdminPage';
 import MyToiletsPage from './pages/MyToiletsPage';
 
 function AppRoutes() {
@@ -21,22 +20,17 @@ function AppRoutes() {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/toilets/:id" element={<ToiletDetailPage />} />
         <Route path="/create-toilet" element={
-          <RoleProtectedRoute roles={['OWNER', 'ADMIN']}>
+          <RoleProtectedRoute roles={['OWNER']}>
             <CreateToiletPage />
           </RoleProtectedRoute>
         } />
         <Route path="/toilets/:id/edit" element={
-          <RoleProtectedRoute roles={['OWNER', 'ADMIN']}>
+          <RoleProtectedRoute roles={['OWNER']}>
             <EditToiletPage />
           </RoleProtectedRoute>
         } />
-        <Route path="/admin" element={
-          <RoleProtectedRoute roles={['ADMIN']}>
-            <AdminPage />
-          </RoleProtectedRoute>
-        } />
         <Route path="/my-toilets" element={
-          <RoleProtectedRoute roles={['OWNER', 'ADMIN']}>
+          <RoleProtectedRoute roles={['OWNER']}>
             <MyToiletsPage />
           </RoleProtectedRoute>
         } />

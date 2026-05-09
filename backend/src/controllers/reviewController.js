@@ -70,7 +70,6 @@ async function deleteReview(req, res, next) {
   try {
     const id = Number(req.params.id);
     const userId = req.user.id;
-    const role = req.user.role;
 
     await prisma.$transaction(async (tx) => {
       const review = await tx.review.findUnique({ where: { id } });
@@ -81,7 +80,7 @@ async function deleteReview(req, res, next) {
         throw error;
       }
 
-      if (review.userId !== userId && role !== 'ADMIN') {
+      if (review.userId !== userId) {
         const error = new Error('Unauthorized to delete this review');
         error.statusCode = 403;
         throw error;

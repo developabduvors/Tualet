@@ -58,15 +58,13 @@ backend/
 │   ├── controllers/
 │   │   ├── authController.js           # register, login, getMe
 │   │   ├── toiletController.js         # CRUD + nearby
-│   │   ├── reviewController.js         # upsert, delete, list
-│   │   └── adminController.js          # users, stats, deleteUser
+│   │   └── reviewController.js         # upsert, delete, list
 │   ├── middlewares/
 │   │   └── authMiddleware.js           # authenticateToken, authorizeRoles
 │   ├── routes/
 │   │   ├── authRoutes.js               # /api/auth
 │   │   ├── toiletRoutes.js             # /api/toilets
-│   │   ├── reviewRoutes.js             # /api/reviews
-│   │   └── adminRoutes.js              # /api/admin (faqat ADMIN)
+│   │   └── reviewRoutes.js             # /api/reviews
 │   ├── utils/
 │   │   ├── jwt.js                      # generateToken
 │   │   ├── password.js                 # scrypt + timingSafeEqual
@@ -106,7 +104,7 @@ backend/
 
 > **Belgilarning ma'nosi:**
 > - **Auth ustuni** — `✅` = JWT token majburiy (`Authorization: Bearer ...`); `—` = ochiq endpoint.
-> - **Rol ustuni** — `OWNER` / `USER` / `ADMIN` / `egasi` = ruxsat etilgan rol(lar); `—` = rol cheklovi yo'q.
+> - **Rol ustuni** — `OWNER` / `USER` / `egasi` = ruxsat etilgan rol(lar); `—` = rol cheklovi yo'q.
 > - Barcha qatorlardagi endpointlar **allaqachon implementatsiya qilingan va ishlaydi** — bu hujjat hozirgi holatni tasvirlaydi, TODO emas.
 
 | Yo'l | Metod | Auth | Rol | Funksiya |
@@ -124,10 +122,7 @@ backend/
 | `/api/toilets/:id` | DELETE | ✅ | egasi | O'chirish |
 | `/api/reviews/toilet/:toiletId` | GET | — | — | Sharhlar |
 | `/api/reviews` | POST | ✅ | USER | Sharh upsert |
-| `/api/reviews/:id` | DELETE | ✅ | egasi/ADMIN | Sharhni o'chirish |
-| `/api/admin/users` | GET | ✅ | ADMIN | Foydalanuvchilar |
-| `/api/admin/users/:id` | DELETE | ✅ | ADMIN | Foydalanuvchini o'chirish (cascade + rating qayta hisob) |
-| `/api/admin/stats` | GET | ✅ | ADMIN | `{ users, toilets, reviews }` sonlari |
+| `/api/reviews/:id` | DELETE | ✅ | egasi | Sharhni o'chirish |
 
 **Javob shakli (har doim):** `{ success, message?, data?, count? }`.
 
@@ -185,7 +180,6 @@ backend/
 Chaqirilish joylari:
 - `reviewController.createReview` — upsert dan keyin.
 - `reviewController.deleteReview` — delete dan keyin.
-- `adminController.deleteUser` — **snapshot-before-cascade** patterni: cascade User'ni o'chirgunga qadar ta'sir qilingan `toiletId`-lar ro'yxati saqlanadi, keyin har biri qayta hisoblanadi.
 
 ### Xato boshqaruvi
 Hamma controller `try { ... } catch (error) { next(error); }`. `app.js` oxiridagi handler `{ success: false, message }` qaytaradi.

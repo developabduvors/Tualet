@@ -3,7 +3,7 @@ const { generateTokens, verifyRefreshToken } = require('../utils/jwt');
 const { hashPassword, comparePassword } = require('../utils/password');
 const { sanitizeUser } = require('../utils/serializers');
 
-const ALLOWED_ROLES = ['USER', 'OWNER', 'ADMIN'];
+const ALLOWED_ROLES = ['USER', 'OWNER'];
 
 async function register(req, res, next) {
   try {

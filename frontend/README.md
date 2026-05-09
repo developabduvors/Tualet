@@ -60,10 +60,9 @@ frontend/
 │   ├── pages/
 │   │   ├── DashboardPage.jsx           # geolocation + nearby filter (radius/type/maxPrice/minRating)
 │   │   ├── ToiletDetailPage.jsx        # ma'lumot + sharhlar + chat
-│   │   ├── CreateToiletPage.jsx        # yangi joy (OWNER/ADMIN)
-│   │   ├── EditToiletPage.jsx          # tahrirlash (egasi/ADMIN)
+│   │   ├── CreateToiletPage.jsx        # yangi joy (OWNER)
+│   │   ├── EditToiletPage.jsx          # tahrirlash (egasi)
 │   │   ├── MyToiletsPage.jsx           # owner.id orqali "mening joylarim"
-│   │   ├── AdminPage.jsx               # /admin/stats + /admin/users CRUD
 │   │   ├── LoginPage.jsx
 │   │   └── RegisterPage.jsx
 │   ├── App.jsx                         # BrowserRouter + AuthProvider + SocketProvider + AppRoutes
@@ -103,10 +102,9 @@ frontend/
 | `/login` | `LoginPage` | — |
 | `/register` | `RegisterPage` | — |
 | `/toilets/:id` | `ToiletDetailPage` | — (umumiy) |
-| `/create-toilet` | `CreateToiletPage` | `RoleProtectedRoute roles={['OWNER','ADMIN']}` |
-| `/toilets/:id/edit` | `EditToiletPage` | `RoleProtectedRoute roles={['OWNER','ADMIN']}` |
-| `/my-toilets` | `MyToiletsPage` | `RoleProtectedRoute roles={['OWNER','ADMIN']}` |
-| `/admin` | `AdminPage` | `RoleProtectedRoute roles={['ADMIN']}` |
+| `/create-toilet` | `CreateToiletPage` | `RoleProtectedRoute roles={['OWNER']}` |
+| `/toilets/:id/edit` | `EditToiletPage` | `RoleProtectedRoute roles={['OWNER']}` |
+| `/my-toilets` | `MyToiletsPage` | `RoleProtectedRoute roles={['OWNER']}` |
 
 `RoleProtectedRoute`:
 - `loading` → spinner
@@ -178,18 +176,14 @@ frontend/
 ### `MyToiletsPage`
 - `GET /api/toilets?ownerId=${user.id}` — backend `getAllToilets` ownerId filtrini qo'llab-quvvatlaydi.
 
-### `AdminPage`
-- `Promise.all` bilan `/admin/stats` va `/admin/users` ni bir vaqtda yuklaydi.
-
 ---
 
 ## So'nggi frontend commitlari
 
 - `d4f9779` — yangi o'zgarishlar
-- `bae9d7c` — `/create-toilet` va `/toilets/:id/edit` faqat OWNER/ADMIN uchun
+- `bae9d7c` — `/create-toilet` va `/toilets/:id/edit` faqat OWNER uchun
 - `c7da0da` — Dashboard'ga geolocation va nearby filtrlari
 - `5284928` — Layout: rolga asoslangan dropdown menyu
 - `0dd4b5e` — `MyToiletsPage` qo'shildi (owner uchun)
-- `2490e34` — Admin paneli (stats + users CRUD)
 - `f778654` — `RoleProtectedRoute` komponenti
 - `28a2865` — API'da 401 auto-logout va token tozalash

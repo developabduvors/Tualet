@@ -3,7 +3,6 @@ const cors = require('cors');
 const authRoutes = require('./routes/authRoutes');
 const toiletRoutes = require('./routes/toiletRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
-const adminRoutes = require('./routes/adminRoutes');
 
 const app = express();
 
@@ -17,7 +16,6 @@ app.get('/api/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/toilets', toiletRoutes);
 app.use('/api/reviews', reviewRoutes);
-app.use('/api/admin', adminRoutes);
 
 app.use((err, req, res, next) => {
   console.error(err);

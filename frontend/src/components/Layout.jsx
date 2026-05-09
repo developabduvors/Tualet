@@ -51,14 +51,11 @@ export default function Layout({ children }) {
                   </div>
                 </li>
                 <li><Link to="/" className="font-medium">🏠 Bosh sahifa</Link></li>
-                {(user.role === 'OWNER' || user.role === 'ADMIN') && (
+                {user.role === 'OWNER' && (
                   <li><Link to="/my-toilets" className="font-medium">📍 Mening joylarim</Link></li>
                 )}
-                {(user.role === 'OWNER' || user.role === 'ADMIN') && (
+                {user.role === 'OWNER' && (
                   <li><Link to="/create-toilet" className="font-medium">➕ Yangi joy</Link></li>
-                )}
-                {user.role === 'ADMIN' && (
-                  <li><Link to="/admin" className="font-medium">⚙️ Admin panel</Link></li>
                 )}
                 <div className="divider my-1"></div>
                 <li>
