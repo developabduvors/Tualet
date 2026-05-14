@@ -1,24 +1,32 @@
 {
-  "name": "toilet-finder-backend",
-  "version": "1.0.0",
-  "main": "src/server.js",
-  "type": "commonjs",
+  "name": "toilet-uz-backend",
+  "private": true,
+  "version": "0.1.0",
   "scripts": {
-    "dev": "nodemon src/server.js",
-    "start": "node src/server.js",
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
     "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev"
+    "prisma:seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
+    "@auth/prisma-adapter": "^2.10.0",
+    "@neondatabase/serverless": "^0.10.4",
+    "@prisma/adapter-neon": "^6.8.2",
     "@prisma/client": "^6.8.2",
-    "cors": "^2.8.5",
-    "dotenv": "^16.4.5",
-    "express": "^4.21.2",
-    "jsonwebtoken": "^9.0.2",
-    "socket.io": "^4.8.1"
+    "cloudinary": "^2.5.1",
+    "next": "^15.3.2",
+    "next-auth": "^5.0.0-beta.25",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "ws": "^8.18.2",
+    "zod": "^3.24.4"
   },
   "devDependencies": {
-    "nodemon": "^3.1.10",
-    "prisma": "^6.8.2"
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "prisma": "^6.8.2",
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3"
   }
 }
