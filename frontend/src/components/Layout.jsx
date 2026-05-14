@@ -4,18 +4,15 @@ import { useAuth } from '../context/AuthContext';
 export default function Layout({ children }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const displayName = user?.name || user?.email || 'Foydalanuvchi';
 
   return (
     <div className="min-h-screen flex flex-col bg-base-200">
-      {/* ─── Navbar ─── */}
       <nav className="navbar glass-panel sticky top-0 z-50 px-4 lg:px-8 shadow-lg border-b border-base-content/5">
         <div className="flex-1">
-          <div
-            className="flex items-center gap-3 cursor-pointer group"
-            onClick={() => navigate('/')}
-          >
+          <div className="flex items-center gap-3 cursor-pointer group" onClick={() => navigate('/')}>
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-xl shadow-lg shadow-primary/20 group-hover:shadow-primary/40 transition-shadow">
-              🚽
+              Toilet
             </div>
             <div className="flex flex-col">
               <span className="text-[10px] font-bold text-primary tracking-[0.25em] uppercase leading-none">
@@ -37,7 +34,7 @@ export default function Layout({ children }) {
                 className="btn btn-ghost btn-circle avatar placeholder ring-2 ring-primary/20 hover:ring-primary/50 transition-all"
               >
                 <div className="bg-gradient-to-br from-primary to-secondary text-primary-content rounded-full w-10">
-                  <span className="text-sm font-bold">{user.name.charAt(0).toUpperCase()}</span>
+                  <span className="text-sm font-bold">{displayName.charAt(0).toUpperCase()}</span>
                 </div>
               </div>
               <ul
@@ -46,21 +43,17 @@ export default function Layout({ children }) {
               >
                 <li className="px-3 py-2 border-b border-base-content/5 mb-2">
                   <div className="flex flex-col gap-0.5 hover:bg-transparent cursor-default">
-                    <span className="font-bold text-sm">{user.name}</span>
-                    <span className="text-[10px] font-bold text-primary uppercase tracking-widest">{user.role}</span>
+                    <span className="font-bold text-sm">{displayName}</span>
+                    {user.email && <span className="text-[10px] opacity-40">{user.email}</span>}
                   </div>
                 </li>
-                <li><Link to="/" className="font-medium">🏠 Bosh sahifa</Link></li>
-                {user.role === 'OWNER' && (
-                  <li><Link to="/my-toilets" className="font-medium">📍 Mening joylarim</Link></li>
-                )}
-                {user.role === 'OWNER' && (
-                  <li><Link to="/create-toilet" className="font-medium">➕ Yangi joy</Link></li>
-                )}
+                <li><Link to="/" className="font-medium">Bosh sahifa</Link></li>
+                <li><Link to="/my-toilets" className="font-medium">Mening joylarim</Link></li>
+                <li><Link to="/create-toilet" className="font-medium">Yangi joy</Link></li>
                 <div className="divider my-1"></div>
                 <li>
                   <button onClick={logout} className="text-error font-bold">
-                    🚪 Chiqish
+                    Chiqish
                   </button>
                 </li>
               </ul>
@@ -71,29 +64,26 @@ export default function Layout({ children }) {
                 Kirish
               </Link>
               <Link to="/register" className="btn btn-primary btn-sm font-bold shadow-lg shadow-primary/20">
-                Ro'yxatdan o'tish
+                Google bilan
               </Link>
             </div>
           )}
         </div>
       </nav>
 
-      {/* ─── Main Content ─── */}
       <main className="flex-1 container mx-auto p-4 lg:p-8 max-w-7xl">
         {children}
       </main>
 
-      {/* ─── Footer ─── */}
       <footer className="border-t border-base-content/5 py-6 px-8">
         <div className="container mx-auto max-w-7xl flex flex-col sm:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-2">
-            <span className="text-lg">🚽</span>
             <span className="text-xs font-bold opacity-40 tracking-widest uppercase">
-              Luxury Rest © 2026
+              Luxury Rest 2026
             </span>
           </div>
           <p className="text-xs opacity-30 font-medium">
-            Premium Restroom Locator — Toshkent
+            Premium Restroom Locator
           </p>
         </div>
       </footer>

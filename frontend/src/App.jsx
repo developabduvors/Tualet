@@ -20,17 +20,17 @@ function AppRoutes() {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/toilets/:id" element={<ToiletDetailPage />} />
         <Route path="/create-toilet" element={
-          <RoleProtectedRoute roles={['OWNER']}>
+          <RoleProtectedRoute>
             <CreateToiletPage />
           </RoleProtectedRoute>
         } />
         <Route path="/toilets/:id/edit" element={
-          <RoleProtectedRoute roles={['OWNER']}>
+          <RoleProtectedRoute>
             <EditToiletPage />
           </RoleProtectedRoute>
         } />
         <Route path="/my-toilets" element={
-          <RoleProtectedRoute roles={['OWNER']}>
+          <RoleProtectedRoute>
             <MyToiletsPage />
           </RoleProtectedRoute>
         } />

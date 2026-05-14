@@ -1,50 +1,30 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import { io } from 'socket.io-client';
 import { useAuth } from './AuthContext';
 
 const SocketContext = createContext();
 
 export function SocketProvider({ children }) {
   const { user } = useAuth();
-  const [socket, setSocket] = useState(null);
+  const [socket] = useState(null);
   const [chatMessages, setChatMessages] = useState([]);
 
   useEffect(() => {
     if (!user) {
-      if (socket) {
-        socket.disconnect();
-        setSocket(null);
-      }
       setChatMessages([]);
-      return undefined;
     }
-
-    const nextSocket = io('http://localhost:5000');
-    
-    nextSocket.on('connect', () => {
-      console.log('Socket connected');
-      nextSocket.emit('join_personal_room', user.id);
-    });
-
-    nextSocket.on('receive_message', (message) => {
-      setChatMessages((prev) => [...prev, message]);
-    });
-
-    setSocket(nextSocket);
-
-    return () => {
-      nextSocket.disconnect();
-    };
   }, [user]);
 
   function sendMessage(receiverId, text) {
-    if (socket && user) {
-      socket.emit('send_message', {
+    if (!user || !text.trim()) return;
+    setChatMessages((prev) => [
+      ...prev,
+      {
         senderId: user.id,
-        receiverId: Number(receiverId),
-        text
-      });
-    }
+        receiverId,
+        text: text.trim(),
+        sentAt: new Date().toISOString(),
+      },
+    ]);
   }
 
   return (

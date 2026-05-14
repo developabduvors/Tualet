@@ -1,49 +1,37 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import { request, setTokens, clearTokens, getAccessToken } from '../lib/api';
+import { beginGoogleAuth, getSession, signOutSession } from '../lib/api';
 
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
-  const [accessToken, setAccessToken] = useState(() => getAccessToken() || '');
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(!!accessToken);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (accessToken) {
-      loadCurrentUser();
-    } else {
-      setUser(null);
-      setLoading(false);
-    }
-  }, [accessToken]);
+    loadCurrentUser();
+  }, []);
 
   async function loadCurrentUser() {
     try {
-      const response = await request('/auth/me');
-      setUser(response.data);
-    } catch (error) {
-      // request() 401 da tokenlarni tozalab redirect qiladi — bu yerda
-      // shunchaki state'ni tozalaymiz.
-      setAccessToken('');
+      const session = await getSession();
+      setUser(session?.user ?? null);
+    } catch {
       setUser(null);
     } finally {
       setLoading(false);
     }
   }
 
-  function login(newAccessToken, newRefreshToken) {
-    setTokens(newAccessToken, newRefreshToken);
-    setAccessToken(newAccessToken);
+  async function login() {
+    await beginGoogleAuth(window.location.origin);
   }
 
-  function logout() {
-    clearTokens();
-    setAccessToken('');
-    setUser(null);
+  async function logout() {
+    await signOutSession(`${window.location.origin}/login`);
   }
 
   return (
-    <AuthContext.Provider value={{ accessToken, user, loading, login, logout, setUser }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, setUser, refreshUser: loadCurrentUser }}>
       {children}
     </AuthContext.Provider>
   );

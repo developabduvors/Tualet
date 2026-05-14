@@ -4,12 +4,12 @@ import { request } from '../lib/api';
 
 const emptyForm = {
   name: '',
-  lat: '41.3111',
-  lng: '69.2797',
-  price: '',
-  status: 'OPEN',
-  type: 'PUBLIC',
-  images: ''
+  address: '',
+  latitude: '41.3111',
+  longitude: '69.2797',
+  type: 'public',
+  priceType: 'free',
+  priceAmount: '0',
 };
 
 export default function CreateToiletPage() {
@@ -23,18 +23,18 @@ export default function CreateToiletPage() {
     setLoading(true);
     setError('');
 
-    const payload = {
-      ...form,
-      images: form.images
-        .split(',')
-        .map((item) => item.trim())
-        .filter(Boolean)
-    };
-
     try {
       const response = await request('/toilets', {
         method: 'POST',
-        body: JSON.stringify(payload)
+        body: JSON.stringify({
+          name: form.name,
+          address: form.address,
+          latitude: Number(form.latitude),
+          longitude: Number(form.longitude),
+          type: form.type,
+          priceType: form.priceType,
+          priceAmount: Number(form.priceAmount || 0),
+        }),
       });
       navigate(`/toilets/${response.data.id}`);
     } catch (err) {
@@ -47,135 +47,36 @@ export default function CreateToiletPage() {
   return (
     <div className="flex justify-center py-10 animate-fade-in-up">
       <div className="w-full max-w-2xl">
-        {/* Header */}
         <div className="mb-8">
-          <button className="btn btn-ghost btn-sm font-bold opacity-50 hover:opacity-100 gap-2 mb-4" onClick={() => navigate(-1)}>
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" /></svg>
-            Orqaga
-          </button>
-          <h1 className="text-3xl font-black tracking-tight">Yangi joy qo'shish</h1>
-          <p className="text-sm opacity-40 mt-1 font-medium">Hojatxona ma'lumotlarini to'ldiring</p>
+          <h1 className="text-3xl font-black tracking-tight">Yangi joy qo&apos;shish</h1>
         </div>
 
-        {/* Card */}
         <div className="card bg-base-100 shadow-2xl border border-base-content/5 overflow-hidden">
-          <div className="h-1 bg-gradient-to-r from-primary to-secondary"></div>
           <div className="card-body p-6 lg:p-8">
-            {error && (
-              <div className="alert alert-error mb-6 rounded-xl animate-slide-down">
-                <span className="text-sm">{error}</span>
-              </div>
-            )}
+            {error && <div className="alert alert-error mb-6 rounded-xl"><span className="text-sm">{error}</span></div>}
 
             <form className="space-y-6" onSubmit={handleSubmit}>
-              <div className="form-control">
-                <label className="label pb-1">
-                  <span className="label-text text-[10px] font-black opacity-40 uppercase tracking-[0.2em]">Nomi</span>
-                </label>
-                <input
-                  className="input input-bordered w-full bg-base-200 border-none focus:ring-2 focus:ring-primary/20 transition-all h-12"
-                  placeholder="Masalan: Markaziy Park Hojatxonasi"
-                  value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  required
-                />
+              <input className="input input-bordered w-full bg-base-200 border-none" placeholder="Nomi" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
+              <input className="input input-bordered w-full bg-base-200 border-none" placeholder="Manzil" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} required />
+              <div className="grid grid-cols-2 gap-4">
+                <input className="input input-bordered w-full bg-base-200 border-none" placeholder="Latitude" value={form.latitude} onChange={(e) => setForm({ ...form, latitude: e.target.value })} required />
+                <input className="input input-bordered w-full bg-base-200 border-none" placeholder="Longitude" value={form.longitude} onChange={(e) => setForm({ ...form, longitude: e.target.value })} required />
               </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="form-control">
-                  <label className="label pb-1">
-                    <span className="label-text text-[10px] font-black opacity-40 uppercase tracking-[0.2em]">Latitude</span>
-                  </label>
-                  <input
-                    className="input input-bordered w-full bg-base-200 border-none focus:ring-2 focus:ring-primary/20 transition-all font-mono"
-                    placeholder="41.3111"
-                    value={form.lat}
-                    onChange={(e) => setForm({ ...form, lat: e.target.value })}
-                    required
-                  />
-                </div>
-                <div className="form-control">
-                  <label className="label pb-1">
-                    <span className="label-text text-[10px] font-black opacity-40 uppercase tracking-[0.2em]">Longitude</span>
-                  </label>
-                  <input
-                    className="input input-bordered w-full bg-base-200 border-none focus:ring-2 focus:ring-primary/20 transition-all font-mono"
-                    placeholder="69.2797"
-                    value={form.lng}
-                    onChange={(e) => setForm({ ...form, lng: e.target.value })}
-                    required
-                  />
-                </div>
+              <div className="grid grid-cols-2 gap-4">
+                <select className="select select-bordered w-full bg-base-200 border-none" value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })}>
+                  <option value="public">public</option>
+                  <option value="mall">mall</option>
+                  <option value="fuel">fuel</option>
+                </select>
+                <select className="select select-bordered w-full bg-base-200 border-none" value={form.priceType} onChange={(e) => setForm({ ...form, priceType: e.target.value })}>
+                  <option value="free">free</option>
+                  <option value="paid">paid</option>
+                </select>
               </div>
-
-              <div className="form-control">
-                <label className="label pb-1">
-                  <span className="label-text text-[10px] font-black opacity-40 uppercase tracking-[0.2em]">Narxi (uzs)</span>
-                </label>
-                <input
-                  className="input input-bordered w-full bg-base-200 border-none focus:ring-2 focus:ring-primary/20 transition-all h-12"
-                  placeholder="2000"
-                  type="number"
-                  value={form.price}
-                  onChange={(e) => setForm({ ...form, price: e.target.value })}
-                  required
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="form-control">
-                  <label className="label pb-1">
-                    <span className="label-text text-[10px] font-black opacity-40 uppercase tracking-[0.2em]">Holati</span>
-                  </label>
-                  <select
-                    className="select select-bordered w-full bg-base-200 border-none focus:ring-2 focus:ring-primary/20 transition-all h-12"
-                    value={form.status}
-                    onChange={(e) => setForm({ ...form, status: e.target.value })}
-                  >
-                    <option value="OPEN">✅ Ochiq (OPEN)</option>
-                    <option value="CLOSED">🔴 Yopiq (CLOSED)</option>
-                  </select>
-                </div>
-                <div className="form-control">
-                  <label className="label pb-1">
-                    <span className="label-text text-[10px] font-black opacity-40 uppercase tracking-[0.2em]">Turi</span>
-                  </label>
-                  <select
-                    className="select select-bordered w-full bg-base-200 border-none focus:ring-2 focus:ring-primary/20 transition-all h-12"
-                    value={form.type}
-                    onChange={(e) => setForm({ ...form, type: e.target.value })}
-                  >
-                    <option value="PUBLIC">🏛️ Ommaviy (PUBLIC)</option>
-                    <option value="PRIVATE">🔒 Xususiy (PRIVATE)</option>
-                    <option value="PAID">💰 To'lovli (PAID)</option>
-                    <option value="FREE">🆓 Bepul (FREE)</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="form-control">
-                <label className="label pb-1">
-                  <span className="label-text text-[10px] font-black opacity-40 uppercase tracking-[0.2em]">Rasmlar</span>
-                </label>
-                <textarea
-                  className="textarea textarea-bordered h-24 bg-base-200 border-none focus:ring-2 focus:ring-primary/20 transition-all text-sm"
-                  placeholder="Rasmlar URL manzillarini vergul bilan ajrating..."
-                  value={form.images}
-                  onChange={(e) => setForm({ ...form, images: e.target.value })}
-                />
-                <label className="label">
-                  <span className="label-text-alt text-[10px] opacity-30 italic">Namuna: https://site.com/img1.jpg, https://site.com/img2.jpg</span>
-                </label>
-              </div>
-
-              <div className="flex justify-between items-center pt-4 border-t border-base-content/5">
-                <button className="btn btn-ghost font-bold" type="button" onClick={() => navigate('/')}>
-                  Bekor qilish
-                </button>
-                <button className="btn btn-primary px-10 shadow-lg shadow-primary/20 font-bold" type="submit" disabled={loading}>
-                  {loading ? <span className="loading loading-spinner loading-sm"></span> : '✓ Saqlash'}
-                </button>
-              </div>
+              <input className="input input-bordered w-full bg-base-200 border-none" type="number" placeholder="Narx" value={form.priceAmount} onChange={(e) => setForm({ ...form, priceAmount: e.target.value })} required />
+              <button className="btn btn-primary px-10 shadow-lg shadow-primary/20 font-bold" type="submit" disabled={loading}>
+                {loading ? <span className="loading loading-spinner loading-sm"></span> : 'Saqlash'}
+              </button>
             </form>
           </div>
         </div>
