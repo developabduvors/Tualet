@@ -64,7 +64,7 @@ export default function Layout({ children }) {
                 Kirish
               </Link>
               <Link to="/register" className="btn btn-primary btn-sm font-bold shadow-lg shadow-primary/20">
-                Google bilan
+                Ro&apos;yxat
               </Link>
             </div>
           )}

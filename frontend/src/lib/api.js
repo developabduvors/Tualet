@@ -49,6 +49,8 @@ async function getCsrfToken() {
   return data.csrfToken;
 }
 
+/* ────────────  Google OAuth  ──────────── */
+
 export async function beginGoogleAuth(callbackUrl = window.location.origin) {
   const csrfToken = await getCsrfToken();
   const form = document.createElement('form');
@@ -69,6 +71,50 @@ export async function beginGoogleAuth(callbackUrl = window.location.origin) {
   document.body.appendChild(form);
   form.submit();
 }
+
+/* ────────────  Oddiy email/parol  ──────────── */
+
+export async function registerWithCredentials(name, email, password) {
+  const response = await fetch(`${API_BASE_URL}/auth/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ name, email, password }),
+  });
+
+  const data = await parseJson(response);
+
+  if (!response.ok) {
+    throw new Error(data.error || 'Ro\'yxatdan o\'tishda xato');
+  }
+
+  return data;
+}
+
+export async function loginWithCredentials(email, password) {
+  const csrfToken = await getCsrfToken();
+
+  const response = await fetch(`${API_BASE_URL}/auth/callback/credentials`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    credentials: 'include',
+    body: new URLSearchParams({
+      csrfToken,
+      email,
+      password,
+      callbackUrl: `${window.location.origin}`,
+    }),
+  });
+
+  // Session tekshirish
+  const session = await getSession();
+  if (!session?.user) {
+    throw new Error('Email yoki parol noto\'g\'ri');
+  }
+  return session;
+}
+
+/* ────────────  Sign Out  ──────────── */
 
 export async function signOutSession(callbackUrl = `${window.location.origin}/`) {
   const csrfToken = await getCsrfToken();

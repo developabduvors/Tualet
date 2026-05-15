@@ -1,5 +1,11 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import { beginGoogleAuth, getSession, signOutSession } from '../lib/api';
+import {
+  beginGoogleAuth,
+  getSession,
+  signOutSession,
+  loginWithCredentials,
+  registerWithCredentials,
+} from '../lib/api';
 
 const AuthContext = createContext();
 
@@ -22,8 +28,25 @@ export function AuthProvider({ children }) {
     }
   }
 
-  async function login() {
+  // Google bilan kirish
+  async function loginGoogle() {
     await beginGoogleAuth(window.location.origin);
+  }
+
+  // Email/parol bilan kirish
+  async function login(email, password) {
+    const session = await loginWithCredentials(email, password);
+    setUser(session.user);
+    return session;
+  }
+
+  // Ro'yxatdan o'tish
+  async function register(name, email, password) {
+    await registerWithCredentials(name, email, password);
+    // Avtomatik login
+    const session = await loginWithCredentials(email, password);
+    setUser(session.user);
+    return session;
   }
 
   async function logout() {
@@ -31,7 +54,18 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, setUser, refreshUser: loadCurrentUser }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        login,
+        loginGoogle,
+        register,
+        logout,
+        setUser,
+        refreshUser: loadCurrentUser,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
