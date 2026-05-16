@@ -10,32 +10,53 @@ import ToiletDetailPage from './pages/ToiletDetailPage';
 import CreateToiletPage from './pages/CreateToiletPage';
 import EditToiletPage from './pages/EditToiletPage';
 import MyToiletsPage from './pages/MyToiletsPage';
+import ApiDocsPage from './pages/ApiDocsPage';
 
 function AppRoutes() {
   return (
-    <Layout>
-      <Routes>
-        <Route path="/" element={<DashboardPage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-        <Route path="/toilets/:id" element={<ToiletDetailPage />} />
-        <Route path="/create-toilet" element={
-          <RoleProtectedRoute>
-            <CreateToiletPage />
-          </RoleProtectedRoute>
-        } />
-        <Route path="/toilets/:id/edit" element={
-          <RoleProtectedRoute>
-            <EditToiletPage />
-          </RoleProtectedRoute>
-        } />
-        <Route path="/my-toilets" element={
-          <RoleProtectedRoute>
-            <MyToiletsPage />
-          </RoleProtectedRoute>
-        } />
-      </Routes>
-    </Layout>
+    <Routes>
+      {/* Standalone pages */}
+      <Route path="/docs" element={<ApiDocsPage />} />
+
+      {/* Pages with standard Layout */}
+      <Route
+        path="*"
+        element={
+          <Layout>
+            <Routes>
+              <Route path="/" element={<DashboardPage />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/register" element={<RegisterPage />} />
+              <Route path="/toilets/:id" element={<ToiletDetailPage />} />
+              <Route
+                path="/create-toilet"
+                element={
+                  <RoleProtectedRoute>
+                    <CreateToiletPage />
+                  </RoleProtectedRoute>
+                }
+              />
+              <Route
+                path="/toilets/:id/edit"
+                element={
+                  <RoleProtectedRoute>
+                    <EditToiletPage />
+                  </RoleProtectedRoute>
+                }
+              />
+              <Route
+                path="/my-toilets"
+                element={
+                  <RoleProtectedRoute>
+                    <MyToiletsPage />
+                  </RoleProtectedRoute>
+                }
+              />
+            </Routes>
+          </Layout>
+        }
+      />
+    </Routes>
   );
 }
 

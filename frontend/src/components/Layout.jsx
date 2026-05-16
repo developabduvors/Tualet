@@ -85,6 +85,11 @@ export default function Layout({ children }) {
           <p className="text-xs opacity-30 font-medium">
             Premium Restroom Locator
           </p>
+          <div className="flex gap-4">
+            <Link to="/docs" className="text-xs font-bold opacity-40 hover:opacity-100 hover:text-primary transition-all uppercase tracking-widest">
+              API Docs
+            </Link>
+          </div>
         </div>
       </footer>
     </div>
